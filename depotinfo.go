@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/adshao/go-binance/v2"
-	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/jedib0t/go-pretty/v6/text"
-	"github.com/urfave/cli/v2"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/adshao/go-binance/v2"
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
+	"github.com/urfave/cli/v2"
 )
 
 func daySeconds(t time.Time) int {
@@ -37,8 +38,8 @@ func InitDepotInfo() *cli.Command {
 			symbol := c.String("symbol")
 			last := c.String("last")
 			symb := strings.Split(symbol, ",")
-			if last=="today" {
-				last=fmt.Sprintf("%ds", daySeconds(time.Now()))
+			if last == "today" {
+				last = fmt.Sprintf("%ds", daySeconds(time.Now()))
 			}
 			lastDuration, err := time.ParseDuration(last)
 			if err != nil {
@@ -85,10 +86,10 @@ func InitDepotInfo() *cli.Command {
 				t.SetStyle(table.StyleBold)
 				i := 1
 				unsoldQuantity := 0.0
-				totalBuyQuantity:=0.0
-				totalBuyNewQuantity:=0.0
-				totalSellQuantity:=0.0
-				totalSellNewQuantity:=0.0
+				totalBuyQuantity := 0.0
+				totalBuyNewQuantity := 0.0
+				totalSellQuantity := 0.0
+				totalSellNewQuantity := 0.0
 				for _, o := range binaClient.Store.Orders {
 					if o.Order.Symbol != v {
 						continue
@@ -104,21 +105,23 @@ func InitDepotInfo() *cli.Command {
 					cumProfit = cumProfit + profit
 
 					if o.Order.Status == binance.OrderStatusTypeFilled && o.Order.Side == binance.SideTypeBuy {
-						totalBuyQuantity+=exQuantity
+						totalBuyQuantity += exQuantity
 					}
 					if o.Order.Status == binance.OrderStatusTypeFilled && o.Order.Side == binance.SideTypeSell {
-						totalSellQuantity+=exQuantity
+						totalSellQuantity += exQuantity
 					}
 					if o.Order.Status == binance.OrderStatusTypeNew && o.Order.Side == binance.SideTypeSell {
-						totalSellNewQuantity+=exQuantity
+						totalSellNewQuantity += exQuantity
 					}
 					if o.Order.Status == binance.OrderStatusTypeNew && o.Order.Side == binance.SideTypeBuy {
-						totalBuyNewQuantity+=exQuantity
+						totalBuyNewQuantity += exQuantity
 					}
 
 					var sellStatus binance.OrderStatusType
-					var sellOrder BinanceOrder
-					sellOrderTime:=""
+					var (
+						sellOrder BinanceOrder
+					)
+					sellOrderTime := ""
 					profit = avgPrc*exQuantity - cumQuote
 
 					if o.Order.Status == binance.OrderStatusTypeFilled && o.Order.Side == binance.SideTypeBuy && binaClient.DoesASellOrderExistForThisOrder(&o) {
@@ -139,22 +142,22 @@ func InitDepotInfo() *cli.Command {
 						unsoldQuantity += exQuantity
 					}
 
-					if !(o.OrderTimeYoungerThan(lastDuration) || binaClient.IsRelationYoungerThan(o, lastDuration))  {
-						if !(sellStatus==binance.OrderStatusTypeNew) {
+					if !(o.OrderTimeYoungerThan(lastDuration) || binaClient.IsRelationYoungerThan(o, lastDuration)) {
+						if !(sellStatus == binance.OrderStatusTypeNew) && len(sellStatus) > 0 {
 							continue
 						}
 					}
 
 					//fmt.Printf("%+#v", o)
-					profitString :=fmt.Sprintf("%2.2s", "-")
-					profitColor:=text.FgWhite
-					if profit>0 {
+					profitString := fmt.Sprintf("%2.2s", "-")
+					profitColor := text.FgWhite
+					if profit > 0 {
 						profitString = fmt.Sprintf("%3.2f", profit)
-						profitColor=text.FgGreen
+						profitColor = text.FgGreen
 					}
-					if profit<0 {
+					if profit < 0 {
 						profitString = fmt.Sprintf("%3.2f", profit)
-						profitColor=text.FgRed
+						profitColor = text.FgRed
 					}
 					if o.Order.Side == "SELL" {
 						profitString = fmt.Sprintf("%8.8s", "-")
@@ -163,44 +166,44 @@ func InitDepotInfo() *cli.Command {
 						}
 					}
 
-					orderStateColor:=text.FgWhite
+					orderStateColor := text.FgWhite
 					switch o.Order.Status {
 					case binance.OrderStatusTypeNew:
-						orderStateColor=text.FgYellow
+						orderStateColor = text.FgYellow
 					case binance.OrderStatusTypeFilled:
-						if sellOrder.Order.OrderID>0 {
-							orderStateColor=text.FgCyan
+						if sellOrder.Order.OrderID > 0 {
+							orderStateColor = text.FgCyan
 							if sellOrder.Order.Status == binance.OrderStatusTypeFilled {
-								orderStateColor=text.FgGreen
+								orderStateColor = text.FgGreen
 							}
 						}
-						if sellOrder.Order.OrderID==0 {
-							orderStateColor=text.FgRed
+						if sellOrder.Order.OrderID == 0 {
+							orderStateColor = text.FgRed
 						}
 					}
 					//t.SetStyle(table.StyleColoredBlackOnGreenWhite)
-					t.SetRowPainter(table.RowPainter(func(row table.Row) text.Colors {
-						Color:=text.FgWhite
+					t.SetRowPainter(func(row table.Row) text.Colors {
+						Color := text.FgWhite
 						switch o.Order.Status {
 						case binance.OrderStatusTypeNew:
 							//Color=text.FgYellow
 						case binance.OrderStatusTypeFilled:
-							if sellOrder.Order.OrderID>0 {
-								Color=text.FgCyan
+							if sellOrder.Order.OrderID > 0 {
+								Color = text.FgCyan
 								if sellOrder.Order.Status == binance.OrderStatusTypeFilled {
-									Color=text.FgGreen
+									Color = text.FgGreen
 								}
 							}
-							if sellOrder.Order.OrderID==0 {
-								Color=text.FgRed
+							if sellOrder.Order.OrderID == 0 {
+								Color = text.FgRed
 							}
 						}
 						var colors []text.Color
 						for range row {
-							colors=append(colors, Color)
+							colors = append(colors, Color)
 						}
-					return colors
-					}))
+						return colors
+					})
 					t.AppendRow([]interface{}{
 						//i,
 						//o.Order.Symbol,
@@ -212,17 +215,17 @@ func InitDepotInfo() *cli.Command {
 						o.Order.CummulativeQuoteQuantity,
 						//price.Price,
 						//fmt.Sprintf("%.8f", quantity*avgPrc),
-						text.Color(profitColor).Sprint(profitString),
+						profitColor.Sprint(profitString),
 						//	o.Order.TimeInForce,
 						o.Order.Side,
-						text.Color(orderStateColor).Sprint(o.Order.Status),
+						orderStateColor.Sprint(o.Order.Status),
 						//	o.Order.StopPrice,
 						// o.Order.IcebergQuantity,
 						time.Unix(o.Order.UpdateTime/1000, 0).Format(time.Stamp),
 						sellStatus,
 						//o.Order.Type,
 						sellOrder.Order.OrderID, //binaClient.GetSellOrderIDforOrder(&o),
-						(sellOrder.Order.Price),
+						sellOrder.Order.Price,
 						//fmt.Sprintf("%+#v", sellOrder),
 						sellOrderTime,
 						//o.Order.UpdateTime,
@@ -236,7 +239,7 @@ func InitDepotInfo() *cli.Command {
 					i++
 				}
 				//t.AppendFooter(table.Row{"", "", "", "", "", "", "", "", "", fmt.Sprintf("%11.8f", cumProfit), "", ""})
-				if t.Length()>0 {
+				if t.Length() > 0 {
 					t.Render()
 				}
 				if unsoldQuantity > 0 {
@@ -247,7 +250,7 @@ func InitDepotInfo() *cli.Command {
 						totalBuyQuantity-totalSellQuantity,
 						totalBuyNewQuantity,
 						totalSellNewQuantity,
-						totalBuyNewQuantity- totalSellNewQuantity)
+						totalBuyNewQuantity-totalSellNewQuantity)
 				}
 			}
 

@@ -51,13 +51,13 @@ func (bos BinanceOrderStore) Save() error {
 	if err != nil {
 		return err
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
-	orderJson, err := json.Marshal(bos.Orders)
+	orderJson, err := json.MarshalIndent(bos.Orders, "", "  ")
 	if err != nil {
-		fmt.Errorf("Cannot encode to JSON ", err)
+		fmt.Printf("Cannot encode to JSON %s", err)
 	}
-	fmt.Fprintf(r, "%s", orderJson)
+	_, _ = fmt.Fprintf(r, "%s", orderJson)
 
 	return nil
 }
@@ -68,7 +68,11 @@ func NewBinanceClient(binaAPIKey, binaSecretKey string) *BinanceClient {
 		client: binance.NewClient(binaAPIKey, binaSecretKey),
 		cache:  cache.New(5*time.Minute, 10*time.Minute),
 	}
-	bc.Store.Load()
+	err := bc.Store.Load()
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
 	return &bc
 }
 
@@ -112,7 +116,6 @@ func (bos BinanceOrderStore) SetSellForOrder(buyOrder int64, sellOrder int64) {
 			return
 		}
 	}
-	return
 }
 func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult float64) (*binance.Order, error) {
 
@@ -121,9 +124,9 @@ func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult flo
 		return nil, fmt.Errorf("cannot find order with id %d\n", orderID)
 	}
 
-		if bc.DoesASellOrderExistForThisOrder(order) == true {
-			return nil, fmt.Errorf("order with id %d already sold\n", orderID)
-		}
+	if bc.DoesASellOrderExistForThisOrder(order) {
+		return nil, fmt.Errorf("order with id %d already sold\n", orderID)
+	}
 	if order.Order.Side != binance.SideTypeBuy {
 		return nil, fmt.Errorf("order with id %d is of type %s \n", orderID, order.Order.Side)
 	}
@@ -147,7 +150,7 @@ func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult flo
 	quant, _ := strconv.ParseFloat(ord.ExecutedQuantity, 8)
 	cumQuote, _ := strconv.ParseFloat(ord.CummulativeQuoteQuantity, 8)
 	fmt.Printf("Sell orderID for Price %s quant %s sell will be at %.2f€ profit will be %.2f€\n", PriceString, ord.ExecutedQuantity, Price*quant, Price*quant-cumQuote)
-	if Confirm("Perform sell ?") == false {
+	if !Confirm("Perform sell ?") {
 		return nil, nil
 	}
 	orderResponse, err := bc.client.NewCreateOrderService().
@@ -164,7 +167,11 @@ func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult flo
 	}
 	fmt.Printf("OrderResponse %+#v", orderResponse)
 	bc.Store.SetSellForOrder(orderID, orderResponse.OrderID)
-	bc.Store.Save()
+	err = bc.Store.Save()
+	if err != nil {
+		fmt.Println(err)
+		return nil, nil
+	}
 	return ord, nil
 }
 
@@ -187,7 +194,7 @@ func (bc *BinanceClient) ListOrders(symbol string) {
 
 }
 
-func (bc *BinanceClient) DoesASellOrderExistForThisOrder(order *BinanceOrder) (bool) {
+func (bc *BinanceClient) DoesASellOrderExistForThisOrder(order *BinanceOrder) bool {
 	for _, r := range order.Relations {
 		if r.SellOrderID > 1 {
 			return true
@@ -196,11 +203,11 @@ func (bc *BinanceClient) DoesASellOrderExistForThisOrder(order *BinanceOrder) (b
 	return false
 }
 
-func (bc *BinanceClient) IsRelationYoungerThan(o BinanceOrder, d time.Duration) (bool) {
+func (bc *BinanceClient) IsRelationYoungerThan(o BinanceOrder, d time.Duration) bool {
 	for _, r := range o.Relations {
-		order:=bc.GetOrderByID(r.SellOrderID)
-		if order!=nil {
-			if order.OrderTimeYoungerThan(d)== true {
+		order := bc.GetOrderByID(r.SellOrderID)
+		if order != nil {
+			if order.OrderTimeYoungerThan(d) {
 				return true
 			}
 		}
@@ -208,7 +215,7 @@ func (bc *BinanceClient) IsRelationYoungerThan(o BinanceOrder, d time.Duration) 
 	return false
 }
 
-func (bc *BinanceClient) GetSellOrderIDforOrder(order *BinanceOrder) (int64) {
+func (bc *BinanceClient) GetSellOrderIDforOrder(order *BinanceOrder) int64 {
 	for _, r := range order.Relations {
 		if r.SellOrderID > 1 {
 			return r.SellOrderID
@@ -216,24 +223,24 @@ func (bc *BinanceClient) GetSellOrderIDforOrder(order *BinanceOrder) (int64) {
 	}
 	return 0
 }
-func (bc *BinanceClient) GetBuyOrderIDforOrder(order *BinanceOrder) (*BinanceOrder) {
+func (bc *BinanceClient) GetBuyOrderIDforOrder(order *BinanceOrder) *BinanceOrder {
 	for _, r := range bc.Store.Orders {
-		for _,relation:=range r.Relations {
+		for _, relation := range r.Relations {
 			if relation.SellOrderID == order.Order.OrderID {
 				return &r
 			}
 		}
 	}
-	return  nil
+	return nil
 }
 
-func (bc *BinanceClient) GetOrderByID(id int64) (*BinanceOrder) {
+func (bc *BinanceClient) GetOrderByID(id int64) *BinanceOrder {
 	for _, r := range bc.Store.Orders {
-		if r.Order.OrderID==id {
+		if r.Order.OrderID == id {
 			return &r
 		}
 	}
-	return  nil
+	return nil
 }
 func (bc *BinanceClient) InsertOrder(o *binance.Order) {
 	found := false

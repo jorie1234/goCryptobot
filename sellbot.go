@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/adshao/go-binance/v2"
-	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/urfave/cli/v2"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/adshao/go-binance/v2"
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/urfave/cli/v2"
 )
 
 func InitSellBot() *cli.Command {
@@ -108,7 +109,10 @@ func InitSellBot() *cli.Command {
 				//t.AppendFooter(table.Row{"", "", "", "", "", "", "", "", "", fmt.Sprintf("%11.8f", cumProfit), "", ""})
 				t.Render()
 				for _, o := range ordersToSell {
-					binaClient.PostSellForOrder(o.Order.OrderID, o.Order.Symbol, mult)
+					_, err := binaClient.PostSellForOrder(o.Order.OrderID, o.Order.Symbol, mult)
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
 			}
 

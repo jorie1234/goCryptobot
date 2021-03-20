@@ -19,31 +19,21 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
+var (
+	version    string
+	date       string
+	commitHash string
+)
+
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		//log.Fatal("Error loading .env file")
-	}
+	_ = godotenv.Load()
 
 	//	binaAPIKey := os.Getenv("API_KEY")
 	//	binaSecretKey := os.Getenv("API_SECRET")
 
 	app := &cli.App{
-		Usage: "query data from binance",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "apikey",
-				Aliases: []string{"ak"},
-				Usage:   "API Key",
-				EnvVars: []string{"API_KEY"},
-			},
-			&cli.StringFlag{
-				Name:    "apisecret",
-				Aliases: []string{"as"},
-				Usage:   "API Secret",
-				EnvVars: []string{"API_SECRET"},
-			},
-		},
+		Usage:   "query data from binance",
+		Version: fmt.Sprintf("%s\n\t Build %s\n\t Commit %s", version, date, commitHash),
 		Commands: []*cli.Command{
 			{
 				Name:    "sellorder",
@@ -161,7 +151,7 @@ func main() {
 							if o.Order.Symbol != v {
 								continue
 							}
-							if strings.ToLower(string(o.Order.Status)) == strings.ToLower(c.String("status")) || strings.ToLower(c.String("status")) == "all" {
+							if strings.EqualFold(string(o.Order.Status), "status") || strings.EqualFold(c.String("status"), "all") {
 								//fmt.Printf("%+#v", o)
 								avgPrice, _ := binaClient.GetAveragePrice(o.Order.Symbol)
 								quantity, _ := strconv.ParseFloat(o.Order.ExecutedQuantity, 8)
@@ -263,7 +253,7 @@ func main() {
 					binaClient := NewBinanceClient(binaAPIKey, binaSecretKey)
 					client := binaClient.client
 					orderID := c.Int64("order")
-					symbol:=c.String("symbol")
+					symbol := c.String("symbol")
 
 					res, err := client.NewGetOrderService().OrderID(orderID).Symbol(symbol).Do(context.Background())
 					if err != nil {
@@ -303,6 +293,41 @@ func main() {
 				},
 			},
 		},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "apikey",
+				Aliases: []string{"ak"},
+				Usage:   "API Key",
+				EnvVars: []string{"API_KEY"},
+			},
+			&cli.StringFlag{
+				Name:    "apisecret",
+				Aliases: []string{"as"},
+				Usage:   "API Secret",
+				EnvVars: []string{"API_SECRET"},
+			},
+		},
+		EnableBashCompletion:   false,
+		HideHelp:               false,
+		HideHelpCommand:        false,
+		HideVersion:            false,
+		BashComplete:           nil,
+		Before:                 nil,
+		After:                  nil,
+		Action:                 nil,
+		CommandNotFound:        nil,
+		OnUsageError:           nil,
+		Compiled:               time.Time{},
+		Authors:                nil,
+		Copyright:              "",
+		Reader:                 nil,
+		Writer:                 nil,
+		ErrWriter:              nil,
+		ExitErrHandler:         nil,
+		Metadata:               nil,
+		ExtraInfo:              nil,
+		CustomAppHelpTemplate:  "",
+		UseShortOptionHandling: false,
 	}
 
 	app.Commands = append(app.Commands, InitDepotInfo())
@@ -311,7 +336,7 @@ func main() {
 	sort.Sort(cli.FlagsByName(app.Flags))
 	sort.Sort(cli.CommandsByName(app.Commands))
 
-	err = app.Run(os.Args)
+	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}

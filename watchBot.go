@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/adshao/go-binance/v2"
-	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/urfave/cli/v2"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/adshao/go-binance/v2"
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/urfave/cli/v2"
 )
 
 func InitWatchBot() *cli.Command {
@@ -38,7 +39,7 @@ func InitWatchBot() *cli.Command {
 				return err
 			}
 			var repeatDuration time.Duration
-			if len(repeat)>0 {
+			if len(repeat) > 0 {
 				repeatDuration, err = time.ParseDuration(repeat)
 				if err != nil {
 					fmt.Printf("Error parsing repeat Parameter %s %v\n", last, err)
@@ -46,8 +47,11 @@ func InitWatchBot() *cli.Command {
 				}
 			}
 			for {
-				binaClient.Store.Load()
-				dataChanged:=false
+				err := binaClient.Store.Load()
+				if err != nil {
+					fmt.Println(err)
+				}
+				dataChanged := false
 				for _, v := range symb {
 					binaClient.ListOrders(v)
 
@@ -83,7 +87,7 @@ func InitWatchBot() *cli.Command {
 						if time.Unix(o.Order.Time/1000, 0).Before(time.Now().Add(-lastDuration)) {
 							continue
 						}
-						if o.FilledStatusSendToTelegram == true {
+						if o.FilledStatusSendToTelegram {
 							continue
 						}
 						if len(telegrambotkey) > 0 {
@@ -95,7 +99,7 @@ func InitWatchBot() *cli.Command {
 								o.Order.CummulativeQuoteQuantity,
 							))
 							binaClient.Store.Orders[k].FilledStatusSendToTelegram = true
-							dataChanged=true
+							dataChanged = true
 						}
 						t.AppendRow([]interface{}{
 							o.Order.OrderID,
@@ -112,14 +116,17 @@ func InitWatchBot() *cli.Command {
 						i++
 					}
 					//t.AppendFooter(table.Row{"", "", "", "", "", "", "", "", "", fmt.Sprintf("%11.8f", cumProfit), "", ""})
-					if t.Length()>0 {
+					if t.Length() > 0 {
 						t.Render()
 					}
 				}
 				if dataChanged {
-					binaClient.Store.Save()
+					err := binaClient.Store.Save()
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
-				if repeatDuration==0 {
+				if repeatDuration == 0 {
 					break
 				}
 				time.Sleep(repeatDuration)
