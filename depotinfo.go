@@ -124,6 +124,9 @@ func InitDepotInfo() *cli.Command {
 					sellOrderTime := ""
 					profit = avgPrc*exQuantity - cumQuote
 
+					if binaClient.GetRawSellOrderID(&o) == 1 {
+						continue
+					}
 					if o.Order.Status == binance.OrderStatusTypeFilled && o.Order.Side == binance.SideTypeBuy && binaClient.DoesASellOrderExistForThisOrder(&o) {
 						//continue
 						sellOrderId := binaClient.GetSellOrderIDforOrder(&o)
@@ -132,7 +135,6 @@ func InitDepotInfo() *cli.Command {
 						if time.Unix(sellOrder.Order.UpdateTime/1000, 0).After(time.Unix(sellOrder.Order.Time/1000, 0)) {
 							sellOrderTime = time.Unix(sellOrder.Order.UpdateTime/1000, 0).Format(time.Stamp)
 						}
-
 						sellStatus = sellOrder.Order.Status
 						if sellStatus == binance.OrderStatusTypeFilled {
 							sellCumQuote, _ := strconv.ParseFloat(sellOrder.Order.CummulativeQuoteQuantity, 8)

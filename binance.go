@@ -25,6 +25,7 @@ type Relation struct {
 	Type        int
 	Percent     float32
 	Profit      float32
+	Mult        float64
 }
 
 type BinanceOrderStore struct {
@@ -103,7 +104,7 @@ func (bos BinanceOrderStore) GetOrderByID(id int64) *BinanceOrder {
 	return nil
 }
 
-func (bos BinanceOrderStore) SetSellForOrder(buyOrder int64, sellOrder int64) {
+func (bos BinanceOrderStore) SetSellForOrder(buyOrder int64, sellOrder int64, mult float64) {
 	for k, v := range bos.Orders {
 		if v.Order.OrderID == buyOrder {
 			bos.Orders[k].Relations = append(bos.Orders[k].Relations, Relation{
@@ -112,6 +113,7 @@ func (bos BinanceOrderStore) SetSellForOrder(buyOrder int64, sellOrder int64) {
 				Type:        0,
 				Percent:     1.0,
 				Profit:      0,
+				Mult:        mult,
 			})
 			return
 		}
@@ -166,7 +168,7 @@ func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult flo
 		return nil, nil
 	}
 	fmt.Printf("OrderResponse %+#v", orderResponse)
-	bc.Store.SetSellForOrder(orderID, orderResponse.OrderID)
+	bc.Store.SetSellForOrder(orderID, orderResponse.OrderID, mult)
 	err = bc.Store.Save()
 	if err != nil {
 		fmt.Println(err)
@@ -201,6 +203,15 @@ func (bc *BinanceClient) DoesASellOrderExistForThisOrder(order *BinanceOrder) bo
 		}
 	}
 	return false
+}
+
+func (bc *BinanceClient) GetRawSellOrderID(order *BinanceOrder) int64 {
+	for _, r := range order.Relations {
+		if r.SellOrderID > 0 {
+			return r.SellOrderID
+		}
+	}
+	return 0
 }
 
 func (bc *BinanceClient) IsRelationYoungerThan(o BinanceOrder, d time.Duration) bool {
@@ -275,4 +286,32 @@ func (bc *BinanceClient) GetStatusByOderID(id int64) binance.OrderStatusType {
 		}
 	}
 	return ""
+}
+
+func RemoveRelation(s []Relation, index int) []Relation {
+	return append(s[:index], s[index+1:]...)
+}
+
+func (bc *BinanceClient) CancelOrder(id int64) error {
+	bo := bc.GetOrderByID(id)
+	if bo == nil {
+		return fmt.Errorf("cannot find order with id %d", id)
+	}
+	res, err := bc.client.NewCancelOrderService().Symbol(bo.Order.Symbol).OrderID(bo.Order.OrderID).Do(context.Background())
+	if err != nil {
+		return err
+	}
+	fmt.Printf("CancelOrderResponse %+#v\n", res)
+	buyOrder := bc.GetBuyOrderIDforOrder(bo)
+	if buyOrder == nil {
+		fmt.Printf("Order %d has no associated buy order", id)
+		return nil
+	}
+	for k, v := range buyOrder.Relations {
+		if v.SellOrderID == id {
+			buyOrder.Relations = RemoveRelation(buyOrder.Relations, k)
+			fmt.Printf("delete order %d from Buy order %d", id, buyOrder.Order.OrderID)
+		}
+	}
+	return nil
 }
