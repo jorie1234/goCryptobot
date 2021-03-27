@@ -2,3 +2,4 @@ binanceorders.json*
 goCryptoBot*
 .env
 .idea/*
+dist/*

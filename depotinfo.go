@@ -143,6 +143,9 @@ func InitDepotInfo() *cli.Command {
 					}
 
 					if !(o.OrderTimeYoungerThan(lastDuration) || binaClient.IsRelationYoungerThan(o, lastDuration)) {
+						if o.Order.Status == binance.OrderStatusTypeExpired {
+							continue
+						}
 						if !(sellStatus == binance.OrderStatusTypeNew) && len(sellStatus) > 0 {
 							continue
 						}
