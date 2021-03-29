@@ -50,6 +50,38 @@ Provide API Key and API Secret via .env or Environment:
 
 ### Use Cases
 
+#### Show general Account Infos
+``goCryptoBot.exe account`` or ``goCryptoBot.exe a`` 
+
+```
+Can Deposit: true
+Can Trade: true
+Can withdraw: true
+BuyerCommission: 0
+TakerCommission: 10
+MakerCommission: 10
+SellerCommission: 0
+Balances:
+┏━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ SYMBOL ┃      LOCKED     ┃       FREE      ┃
+┣━━━━━━━━╋━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━┫
+┃  BTC   ┃      0.01194800 ┃      0.01489100 ┃
+┃  LTC   ┃      0.27500000 ┃      0.30900000 ┃
+┃  ETH   ┃      0.00000000 ┃      0.03742000 ┃
+┃  USDT  ┃     70.00000000 ┃    333.90636715 ┃
+┃  ENJ   ┃      0.00000000 ┃     24.97500000 ┃
+┃  DATA  ┃      0.00000000 ┃      0.00900000 ┃
+┃  ADA   ┃     47.40000000 ┃     89.60000000 ┃
+┃  FTM   ┃      0.00000000 ┃    139.66020000 ┃
+┃  EUR   ┃     48.34516250 ┃    769.83172375 ┃
+┃  COTI  ┃      0.00000000 ┃      0.03160000 ┃
+┃  FIO   ┃      0.00000000 ┃    185.56425000 ┃
+┃  DOT   ┃      0.00000000 ┃      1.67100000 ┃
+┃ BTCST  ┃      0.00000000 ┃      0.99900000 ┃
+┗━━━━━━━━┻━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━┛
+
+```
+
 #### Show general Depot Infos (command depotinfo or di)
 
 ```

@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jedib0t/go-pretty/v6/text"
+
 	"github.com/joho/godotenv"
 	"github.com/urfave/cli/v2"
 
@@ -239,7 +241,34 @@ func main() {
 						fmt.Println(err)
 						return nil
 					}
-					fmt.Println(res)
+					fmt.Printf("Can Deposit: %v\n", res.CanDeposit)
+					fmt.Printf("Can Trade: %v\n", res.CanTrade)
+					fmt.Printf("Can withdraw: %v\n", res.CanWithdraw)
+					fmt.Printf("BuyerCommission: %d\n", res.BuyerCommission)
+					fmt.Printf("TakerCommission: %d\n", res.TakerCommission)
+					fmt.Printf("MakerCommission: %d\n", res.MakerCommission)
+					fmt.Printf("SellerCommission: %d\n", res.SellerCommission)
+					fmt.Printf("Balances: \n")
+					t := table.NewWriter()
+					t.SetOutputMirror(os.Stdout)
+					t.SetStyle(table.StyleBold)
+					t.AppendHeader(table.Row{
+						text.AlignCenter.Apply("Symbol", 5),
+						text.AlignCenter.Apply("Locked", 15),
+						text.AlignCenter.Apply("Free", 15),
+					})
+					for _, v := range res.Balances {
+						locked, _ := strconv.ParseFloat(v.Locked, 8)
+						free, _ := strconv.ParseFloat(v.Free, 8)
+						if !(locked == 0.0 && free == 0.0) {
+							t.AppendRow([]interface{}{
+								text.AlignCenter.Apply(v.Asset, 5),
+								text.AlignRight.Apply(v.Locked, 15),
+								text.AlignRight.Apply(v.Free, 15),
+							})
+						}
+					}
+					t.Render()
 					return nil
 				},
 			},
