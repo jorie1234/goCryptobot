@@ -207,3 +207,8 @@ Loaded 1XXX orders
 
 This Command runs until it is stopped with CTRL-C
 
+## Build 
+Powershell:
+`` $env:TAG='0.0.xx'``
+then
+``mage release``

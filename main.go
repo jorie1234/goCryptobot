@@ -256,18 +256,30 @@ func main() {
 						text.AlignCenter.Apply("Symbol", 5),
 						text.AlignCenter.Apply("Locked", 15),
 						text.AlignCenter.Apply("Free", 15),
+						text.AlignCenter.Apply("Price €", 15),
 					})
+					quoteSum := 0.0
 					for _, v := range res.Balances {
 						locked, _ := strconv.ParseFloat(v.Locked, 8)
 						free, _ := strconv.ParseFloat(v.Free, 8)
+
 						if !(locked == 0.0 && free == 0.0) {
+							quote := "-"
+							price, err := binaClient.GetAveragePrice(fmt.Sprintf("%s%s", v.Asset, "EUR"))
+							if err == nil {
+								priceQuote, _ := strconv.ParseFloat(price.Price, 8)
+								quote = fmt.Sprintf("%.2f", (locked+free)*priceQuote)
+								quoteSum += (locked + free) * priceQuote
+							}
 							t.AppendRow([]interface{}{
 								text.AlignCenter.Apply(v.Asset, 5),
 								text.AlignRight.Apply(v.Locked, 15),
 								text.AlignRight.Apply(v.Free, 15),
+								text.AlignRight.Apply(quote, 15),
 							})
 						}
 					}
+					t.AppendFooter(table.Row{"", "", "", text.AlignRight.Apply(fmt.Sprintf("%.2f", quoteSum), 15)})
 					t.Render()
 					return nil
 				},

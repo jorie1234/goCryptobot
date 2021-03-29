@@ -96,6 +96,10 @@ func Release() (err error) {
 			sh.RunV("git", "push", "--delete", "origin", "$TAG")
 		}
 	}()
+	if err := sh.RunV("goreleaser", "release", "--rm-dist"); err != nil {
+		return err
+	}
+
 	//return retool("goreleaser")
 	return nil
 }

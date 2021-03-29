@@ -77,20 +77,20 @@ func NewBinanceClient(binaAPIKey, binaSecretKey string) *BinanceClient {
 	return &bc
 }
 
-func (bc *BinanceClient) GetAveragePrice(s string) (*binance.AvgPrice, error) {
+func (bc *BinanceClient) GetAveragePrice(symbol string) (*binance.AvgPrice, error) {
 
-	avgPriceCached, found := bc.cache.Get(s)
+	avgPriceCached, found := bc.cache.Get(symbol)
 	if found {
 		return avgPriceCached.(*binance.AvgPrice), nil
 	}
 
-	avgPrice, err := bc.client.NewAveragePriceService().Symbol(s).Do(context.Background())
+	avgPrice, err := bc.client.NewAveragePriceService().Symbol(symbol).Do(context.Background())
 
 	if err != nil {
-		fmt.Println(err)
-		return nil, nil
+		//fmt.Printf("Cannot get price for Symbol %s : %v\n", symbol, err)
+		return nil, err
 	}
-	bc.cache.Set(s, avgPrice, cache.DefaultExpiration)
+	bc.cache.Set(symbol, avgPrice, cache.DefaultExpiration)
 	return avgPrice, err
 }
 
