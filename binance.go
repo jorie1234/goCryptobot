@@ -315,3 +315,22 @@ func (bc *BinanceClient) CancelOrder(id int64) error {
 	}
 	return nil
 }
+
+func (bc *BinanceClient) ConnectSellOrderWithBuyOrder(sellorderID, buyorderID int64) error {
+	buyorder := bc.GetOrderByID(buyorderID)
+	if buyorder == nil {
+		return fmt.Errorf("cannot find order for buyorderID %d", buyorderID)
+	}
+	sellorder := bc.GetOrderByID(sellorderID)
+	if sellorder == nil {
+		return fmt.Errorf("cannot find order for sellorderID %d", buyorderID)
+	}
+	if buyorder.Order.Side != binance.SideTypeBuy {
+		return fmt.Errorf("order for buyorderID %d is not a buy order, order is %s", buyorderID, buyorder.Order.Side)
+	}
+	if sellorder.Order.Side != binance.SideTypeSell {
+		return fmt.Errorf("order for sellorderID %d is not a sell order, order is %s", buyorderID, sellorder.Order.Side)
+	}
+	bc.Store.SetSellForOrder(buyorderID, sellorderID, 0.0)
+	return nil
+}
