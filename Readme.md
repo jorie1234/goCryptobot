@@ -207,6 +207,24 @@ Loaded 1XXX orders
 
 This Command runs until it is stopped with CTRL-C
 
+#### Replace a sell order with a new one
+
+```
+.\goCryptoBot.exe replacesellorder
+NAME:
+   goCryptoBot.exe replacesellorder - replace a sell order: delete sell order and create a new sell order
+
+USAGE:
+   goCryptoBot.exe replacesellorder [command options] [arguments...]
+
+OPTIONS:
+   --orderid value, -o value  id of sell order
+   --mult value, -m value     multiplier, replace sell order for CummulativeQuoteQuantity * mult
+   --help, -h                 show help (default: false)
+```
+
+Use the command ``replacesellorder`` if you want to cancel an existing sell order and replace it with a new one. Specify the ``orderid`` of the existing sell order and a new ``mult`` value. The Tool takes the CummulativeQuoteQuantity of the buy order, muliplies with ``mult`` and uses the result for the new sell order.
+
 ## Build 
 Powershell:
 `` $env:TAG='0.0.xx'``
