@@ -225,7 +225,38 @@ OPTIONS:
 
 Use the command ``replacesellorder`` if you want to cancel an existing sell order and replace it with a new one. Specify the ``orderid`` of the existing sell order and a new ``mult`` value. The Tool takes the CummulativeQuoteQuantity of the buy order, muliplies with ``mult`` and uses the result for the new sell order.
 
+#### Create MARKET Buy Order
+
+The command ``createmarketbuyorder`` creates a buy order at Market price.
+
+It summarizes what it does and you have to confirm it.
+
+```
+.\goCryptoBot.exe createmarketbuyorder
+NAME:
+goCryptoBot.exe createmarketbuyorder - create a market buy order for a symbol
+
+USAGE:
+goCryptoBot.exe createmarketbuyorder [command options] [arguments...]
+
+OPTIONS:
+--symbol value, -s value    Symbol
+--quantity value, -q value  quantity to buy (default: 0)
+--help, -h                  show help (default: false)
+```
+##### Example
+
+```
+ .\goCryptoBot.exe createmarketbuyorder --symbol=BTCEUR --quantity=0.0102
+ 
+ Buy 0.010200 of BTCEUR at market (this will cost you 512.95) Please confirm  [y/n]:
+ ```
+
 ## Build 
+goCryptoBot uses ``mage`` as build tool. But you could also just run ``go build``
+
+If you want to use ``mage`` install it as described here https://github.com/magefile/mage
+
 Powershell:
 `` $env:TAG='0.0.xx'``
 then

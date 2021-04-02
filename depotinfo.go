@@ -209,12 +209,16 @@ func InitDepotInfo() *cli.Command {
 						}
 						return colors
 					})
+					pr := o.Order.Price
+					if o.Order.Type == binance.OrderTypeMarket {
+						pr = "Market"
+					}
 					t.AppendRow([]interface{}{
 						//i,
 						//o.Order.Symbol,
 						o.Order.OrderID,
 						//	o.Order.ClientOrderID,
-						o.Order.Price,
+						pr,
 						//o.Order.OrigQuantity,
 						o.Order.ExecutedQuantity,
 						o.Order.CummulativeQuoteQuantity,

@@ -119,6 +119,15 @@ func (bos BinanceOrderStore) SetSellForOrder(buyOrder int64, sellOrder int64, mu
 		}
 	}
 }
+
+func (bos BinanceOrderStore) InsertNewBuyOrder(order *binance.Order) error {
+	bos.Orders = append(bos.Orders, BinanceOrder{
+		Order:                      *order,
+		Relations:                  nil,
+		FilledStatusSendToTelegram: false,
+	})
+	return bos.Save()
+}
 func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult float64) (*binance.Order, error) {
 
 	order := bc.Store.GetOrderByID(orderID)
@@ -175,6 +184,36 @@ func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult flo
 		return nil, nil
 	}
 	return ord, nil
+}
+
+func (bc *BinanceClient) CreateMarketBuyOrder(symbol string, quantity float64) (*BinanceOrder, error) {
+
+	orderResponse, err := bc.client.NewCreateOrderService().
+		Symbol(symbol).
+		Type(binance.OrderTypeMarket).
+		Quantity(fmt.Sprintf("%f", quantity)).
+		//Price(fmt.Sprintf("%f", price)).
+		Side(binance.SideTypeBuy).
+		//TimeInForce(binance.TimeInForceTypeGTC).
+		Do(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	fmt.Printf("BuyOrderResponse %+#v", orderResponse)
+	fmt.Printf("Refresh Orders for Symbol %s\n", symbol)
+	bc.ListOrders(symbol)
+	err = bc.Store.Save()
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	order := bc.GetOrderByID(orderResponse.OrderID)
+	if order == nil {
+		fmt.Printf("cannot get new buy order with id %d\n", orderResponse.OrderID)
+		return nil, fmt.Errorf("cannot get new buy order with id %d\n", orderResponse.OrderID)
+	}
+	return order, nil
 }
 
 func (bc *BinanceClient) ListOrders(symbol string) {
