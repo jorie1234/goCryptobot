@@ -44,7 +44,7 @@ func InitCreateMarketBuyOrder() *cli.Command {
 				return nil
 			}
 
-			fmt.Printf("Buy successful, order is %+#v", order.Order)
+			fmt.Printf("Buy successful, order is %+#v", order)
 
 			return nil
 		},
