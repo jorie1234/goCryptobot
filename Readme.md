@@ -252,6 +252,34 @@ OPTIONS:
  Buy 0.010200 of BTCEUR at market (this will cost you 512.95) Please confirm  [y/n]:
  ```
 
+#### Create Limit Buy Order
+
+The command ``createlimitbuyorder`` creates a limit buy order.
+
+It summarizes what it does and you have to confirm it.
+
+```
+.\goCryptoBot.exe createlimitbuyorder
+NAME:
+   goCryptoBot.exe createlimitbuyorder - create a limit buy order for a symbol
+
+USAGE:
+   goCryptoBot.exe createlimitbuyorder [command options] [arguments...]
+
+OPTIONS:
+   --symbol value, -s value    Symbol
+   --quantity value, -q value  quantity to buy (default: 0)
+   --limit value, -l value     buy limit (default: 0)
+   --help, -h                  show help (default: false)
+```
+##### Example
+
+```
+.\goCryptoBot.exe createlimitbuyorder --symbol=BTCEUR --quantity=0.0006 --limit=42000
+Loaded 3597 orders
+Buy 0.000600 of BTCEUR with limit of 42000.000000 (this will cost you 25.20) Please confirm  [y/n]: y
+ ```
+
 ## Build 
 goCryptoBot uses ``mage`` as build tool. But you could also just run ``go build``
 

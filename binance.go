@@ -186,7 +186,7 @@ func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult flo
 	return ord, nil
 }
 
-func (bc *BinanceClient) CreateMarketBuyOrder(symbol string, quantity float64) (*BinanceOrder, error) {
+func (bc *BinanceClient) CreateMarketBuyOrder(symbol string, quantity float64) (*binance.CreateOrderResponse, error) {
 
 	orderResponse, err := bc.client.NewCreateOrderService().
 		Symbol(symbol).
@@ -213,7 +213,7 @@ func (bc *BinanceClient) CreateMarketBuyOrder(symbol string, quantity float64) (
 		fmt.Printf("cannot get new buy order with id %d\n", orderResponse.OrderID)
 		return nil, fmt.Errorf("cannot get new buy order with id %d\n", orderResponse.OrderID)
 	}
-	return order, nil
+	return orderResponse, nil
 }
 
 func (bc *BinanceClient) ListOrders(symbol string) {
@@ -233,6 +233,24 @@ func (bc *BinanceClient) ListOrders(symbol string) {
 		return //orders, nil
 	}
 
+}
+
+func (bc *BinanceClient) CreateLimitBuyOrder(symbol string, quantity, limit float64) (*binance.CreateOrderResponse, error) {
+
+	orderResponse, err := bc.client.NewCreateOrderService().
+		Symbol(symbol).
+		Type(binance.OrderTypeLimit).
+		Quantity(fmt.Sprintf("%f", quantity)).
+		Price(fmt.Sprintf("%f", limit)).
+		Side(binance.SideTypeBuy).
+		TimeInForce(binance.TimeInForceTypeGTC).
+		Do(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	fmt.Printf("LimitBuyOrderResponse %+#v", orderResponse)
+	return orderResponse, nil
 }
 
 func (bc *BinanceClient) DoesASellOrderExistForThisOrder(order *BinanceOrder) bool {
