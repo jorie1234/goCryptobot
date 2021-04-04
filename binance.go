@@ -367,7 +367,7 @@ func (bc *BinanceClient) CancelOrder(id int64) error {
 	for k, v := range buyOrder.Relations {
 		if v.SellOrderID == id {
 			buyOrder.Relations = RemoveRelation(buyOrder.Relations, k)
-			fmt.Printf("delete order %d from Buy order %d", id, buyOrder.Order.OrderID)
+			fmt.Printf("delete order %d from Buy order %d\n", id, buyOrder.Order.OrderID)
 		}
 	}
 	return nil

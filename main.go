@@ -377,6 +377,7 @@ func main() {
 	app.Commands = append(app.Commands, InitConnectOrder())
 	app.Commands = append(app.Commands, InitCreateMarketBuyOrder())
 	app.Commands = append(app.Commands, InitCreateLimitBuyOrder())
+	app.Commands = append(app.Commands, InitCancelOrder())
 	app.Commands = append(app.Commands, InitReplaceSellOrder())
 	sort.Sort(cli.FlagsByName(app.Flags))
 	sort.Sort(cli.CommandsByName(app.Commands))

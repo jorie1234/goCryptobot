@@ -280,6 +280,51 @@ Loaded 3597 orders
 Buy 0.000600 of BTCEUR with limit of 42000.000000 (this will cost you 25.20) Please confirm  [y/n]: y
  ```
 
+#### Cancel Order
+
+The command ``cancelorder`` creates a limit buy order.
+
+It shows the order and you have to confirm the cancellation.
+
+```
+ .\goCryptoBot.exe cancelorder
+NAME:
+goCryptoBot.exe cancelorder - cancle an order
+
+USAGE:
+goCryptoBot.exe cancelorder [command options] [arguments...]
+
+OPTIONS:
+--orderid value, -o value  id of order to cancel
+--help, -h                 show help (default: false)
+
+2021/04/04 17:50:41 Required flag "orderid" not set
+```
+##### Example
+
+```
+.\goCryptoBot.exe cancelorder -o 19625427
+Loaded 3599 orders
+Order:
+┏━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ SYMBOL  ┃  ORDERID ┃ PRICE      ┃ QNT          ┃ EXQNT      ┃ CUMQUOTEQNT ┃ SIDE ┃ STATUS ┃ TIME            ┃
+┣━━━━━━━━━╋━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━━━╋━━━━━━╋━━━━━━━━╋━━━━━━━━━━━━━━━━━┫
+┃ FIOUSDT ┃ 19625427 ┃ 0.48000000 ┃ 185.56000000 ┃ 0.00000000 ┃ 0.00000000  ┃ SELL ┃ NEW    ┃ Apr  4 13:31:43 ┃
+┗━━━━━━━━━┻━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━━━┻━━━━━━┻━━━━━━━━┻━━━━━━━━━━━━━━━━━┛
+
+is this order correct ? [y/n]: y
+CancelOrderResponse &binance.CancelOrderResponse{Symbol:"FIOUSDT", OrigClientOrderID:"web_245accfe52fc4466ba38511d510b0d7f", OrderID:19625427, OrderListID:-1, ClientOrderID:"tiA9VuuYC6QYQwBrMJ3B9M", TransactTime:0, Price:"0.48000000", OrigQuantity:"185.56000000", ExecutedQuantity:"0.00000000", CummulativeQuoteQuantity:"0.00000000", Status:"CANCELED", TimeInForce:"GTC", Type:"LIMIT", Side:"SELL"}
+delete order 19625427 from Buy order 13939605
+order 19625427 canceld
+```
+##### Example
+
+```
+.\goCryptoBot.exe createlimitbuyorder --symbol=BTCEUR --quantity=0.0006 --limit=42000
+Loaded 3597 orders
+Buy 0.000600 of BTCEUR with limit of 42000.000000 (this will cost you 25.20) Please confirm  [y/n]: y
+ ```
+
 ## Build 
 goCryptoBot uses ``mage`` as build tool. But you could also just run ``go build``
 
