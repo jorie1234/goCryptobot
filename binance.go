@@ -186,6 +186,23 @@ func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult flo
 	return ord, nil
 }
 
+func (bc *BinanceClient) CreateSellOrder(symbol, price, quantity string) (*binance.CreateOrderResponse, error) {
+	orderResponse, err := bc.client.NewCreateOrderService().
+		Symbol(symbol).
+		Type(binance.OrderTypeLimit).
+		Quantity(quantity).
+		Price(price).
+		Side(binance.SideTypeSell).
+		TimeInForce(binance.TimeInForceTypeGTC).
+		Do(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	fmt.Printf("createsellorder Response %+#v", orderResponse)
+	return orderResponse, nil
+}
+
 func (bc *BinanceClient) CreateMarketBuyOrder(symbol string, quantity float64) (*binance.CreateOrderResponse, error) {
 
 	orderResponse, err := bc.client.NewCreateOrderService().
@@ -284,12 +301,13 @@ func (bc *BinanceClient) IsRelationYoungerThan(o BinanceOrder, d time.Duration) 
 }
 
 func (bc *BinanceClient) GetSellOrderIDforOrder(order *BinanceOrder) int64 {
+	var so int64
 	for _, r := range order.Relations {
 		if r.SellOrderID > 1 {
-			return r.SellOrderID
+			so = r.SellOrderID
 		}
 	}
-	return 0
+	return so
 }
 func (bc *BinanceClient) GetBuyOrderIDforOrder(order *BinanceOrder) *BinanceOrder {
 	for _, r := range bc.Store.Orders {

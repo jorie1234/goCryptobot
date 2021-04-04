@@ -317,13 +317,44 @@ CancelOrderResponse &binance.CancelOrderResponse{Symbol:"FIOUSDT", OrigClientOrd
 delete order 19625427 from Buy order 13939605
 order 19625427 canceld
 ```
+
+
+#### Create Sell Order
+
+The command ``createsellorder`` creates a sell order.
+
+You can specify a buy order.
+
+```
+.\goCryptoBot.exe createsellorder --help
+NAME:
+   goCryptoBot.exe createsellorder - create a sell order. You can specify a corresponding buy order.
+
+USAGE:
+   If you specify a buy order the sell order will be associated with the buy order. If you dont specify a quantity, the executed quantity from the buy will be taken
+
+OPTIONS:
+   --symbol value, -s value        Symbol
+   --buyorderid value, --bo value  id of buy order
+   --quantity value, -q value      quantity to sell
+   --price value, -p value         price to sell
+   --takeqntfrombuy                Bool Flag to signal that the quantity should be taken from the buy order (default: false)
+   --help, -h                      show help (default: false)
+
+```
 ##### Example
 
 ```
-.\goCryptoBot.exe createlimitbuyorder --symbol=BTCEUR --quantity=0.0006 --limit=42000
-Loaded 3597 orders
-Buy 0.000600 of BTCEUR with limit of 42000.000000 (this will cost you 25.20) Please confirm  [y/n]: y
- ```
+.\goCryptoBot.exe createsellorder --buyorderid=13939605 --price=0.46 -q="185"
+Loaded 3599 orders
+create sell order for symbol FIOUSDT price 0.46 quant 185 so sell will be at 85.10€
+Perform sell ? [y/n]: y
+createsellorder Response &binance.CreateOrderResponse{Symbol:"FIOUSDT", OrderID:19911249, ClientOrderID:"8HnaJWBix24HidqV8pX3oW", TransactTime:1617562246913, Price:"0.46000000", OrigQuantity:"185.00000000", ExecutedQuantity:"0.00000000", CummulativeQuoteQuantity:"0.00000000", IsIsolated:false, Status:"NEW", TimeInForce:"GTC", Type:"LIMIT", Side:"SELL", Fills:[]*binance.Fill{}, MarginBuyBorrowAmount:"", MarginBuyBorrowAsset:""}
+```
+
+
+
+
 
 ## Build 
 goCryptoBot uses ``mage`` as build tool. But you could also just run ``go build``
