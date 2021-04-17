@@ -380,6 +380,7 @@ func main() {
 	app.Commands = append(app.Commands, InitCancelOrder())
 	app.Commands = append(app.Commands, InitCreateSellOrder())
 	app.Commands = append(app.Commands, InitReplaceSellOrder())
+	app.Commands = append(app.Commands, InitExchangeInfo())
 	sort.Sort(cli.FlagsByName(app.Flags))
 	sort.Sort(cli.CommandsByName(app.Commands))
 

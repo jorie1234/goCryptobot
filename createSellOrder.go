@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/adshao/go-binance/v2"
 
@@ -80,7 +82,29 @@ func InitCreateSellOrder() *cli.Command {
 			sellOrder, err := binaClient.CreateSellOrder(symbol, price, quantity)
 			if sellOrder == nil || err != nil {
 				fmt.Printf("could not create sell order %s", err)
-				return nil
+				if strings.Contains(err.Error(), "Account has insufficient balance for requested action") {
+					fmt.Println("try to sell the remaining quantity...")
+					res, err := binaClient.client.NewGetAccountService().Do(context.Background())
+					if err != nil {
+						fmt.Println(err)
+						return nil
+					}
+					s := strings.Replace(symbol, "ETH", "", -1)
+					s = strings.Replace(s, "USDT", "", -1)
+					fmt.Printf("Looking for coin %s in your account balances\n", s)
+					for _, b := range res.Balances {
+						if b.Asset == s {
+							fmt.Printf("Looking for coin %s in your account balances\n", s)
+							sellOrder, err = binaClient.CreateSellOrder(symbol, price, b.Free)
+							if sellOrder == nil || err != nil {
+								fmt.Printf("could not create sell order %s", err)
+								return nil
+							}
+						}
+					}
+				} else {
+					return nil
+				}
 			}
 
 			binaClient.Store.SetSellForOrder(buyorderid, sellOrder.OrderID, 0.0)

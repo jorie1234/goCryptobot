@@ -108,6 +108,13 @@ func InitSellBot() *cli.Command {
 				}
 				//t.AppendFooter(table.Row{"", "", "", "", "", "", "", "", "", fmt.Sprintf("%11.8f", cumProfit), "", ""})
 				t.Render()
+				fmt.Printf("Refresh Exchangeinfo....")
+				err = binaClient.GetExchangeInfo()
+				if err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return nil
+				}
+				fmt.Printf("done\n")
 				for _, o := range ordersToSell {
 					_, err := binaClient.PostSellForOrder(o.Order.OrderID, o.Order.Symbol, mult)
 					if err != nil {

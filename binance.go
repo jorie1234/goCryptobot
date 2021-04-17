@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/adshao/go-binance/v2"
@@ -15,9 +16,10 @@ import (
 )
 
 type BinanceClient struct {
-	client *binance.Client
-	cache  *cache.Cache
-	Store  BinanceOrderStore
+	client       *binance.Client
+	cache        *cache.Cache
+	Store        BinanceOrderStore
+	ExchangeInfo *binance.ExchangeInfo
 }
 type Relation struct {
 	BuyOrderID  int64
@@ -157,23 +159,63 @@ func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult flo
 	fmt.Printf("fetched order %+#v\n", ord)
 	Price, _ := strconv.ParseFloat(ord.Price, 8)
 	Price = Price * mult
+
+	lotSize := GetLotSizeStepForSymbolFromExchangeInfo(bc.ExchangeInfo, symbol)
+	if len(lotSize) == 0 {
+		return nil, fmt.Errorf("cannot get lotsize for symbol %s", symbol)
+	}
+	quantityTrimmed := TrimQuantityToLotSize(ord.ExecutedQuantity, lotSize)
+
 	PriceString := fmt.Sprintf("%f", Price)
-	quant, _ := strconv.ParseFloat(ord.ExecutedQuantity, 8)
+	quant, _ := strconv.ParseFloat(quantityTrimmed, 8)
 	cumQuote, _ := strconv.ParseFloat(ord.CummulativeQuoteQuantity, 8)
-	fmt.Printf("Sell orderID for Price %s quant %s sell will be at %.2f€ profit will be %.2f€\n", PriceString, ord.ExecutedQuantity, Price*quant, Price*quant-cumQuote)
+
+	fmt.Printf("Sell orderID for Price %s quant %s sell will be at %.2f€ profit will be %.2f€\n", PriceString, quantityTrimmed, Price*quant, Price*quant-cumQuote)
 	if !Confirm("Perform sell ?") {
 		return nil, nil
 	}
+
 	orderResponse, err := bc.client.NewCreateOrderService().
 		Symbol(symbol).
 		Type(binance.OrderTypeLimit).
-		Quantity(ord.ExecutedQuantity).
+		Quantity(quantityTrimmed).
 		Price(PriceString).
 		Side(binance.SideTypeSell).
 		TimeInForce(binance.TimeInForceTypeGTC).
 		Do(context.Background())
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("SB: Cannot sell order ", err)
+		if strings.Contains(err.Error(), "Account has insufficient balance for requested action") {
+			//ei := LoadExchangeInfo()
+			//sym:=GetSymbolFromExchangeInfo(ei, symbol)
+			fmt.Println("try to sell the remaining quantity...")
+			res, err := bc.client.NewGetAccountService().Do(context.Background())
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
+			s := strings.Replace(symbol, "EUR", "", -1)
+			s = strings.Replace(s, "USDT", "", -1)
+			fmt.Printf("Looking for coin %s in your account balances\n", s)
+			for _, b := range res.Balances {
+				if b.Asset == s {
+					quantityTrimmed := TrimQuantityToLotSize(b.Free, lotSize)
+
+					fmt.Printf("found for %s with quantity %s\n", s, quantityTrimmed)
+					if !Confirm("sell this ?") {
+						return nil, err
+					}
+					orderResponse, err = bc.CreateSellOrder(symbol, PriceString, quantityTrimmed)
+					if orderResponse == nil || err != nil {
+						fmt.Printf("could not create sell order %s", err)
+						return nil, err
+					}
+				}
+			}
+		} else {
+			return nil, err
+		}
+
 		return nil, nil
 	}
 	fmt.Printf("OrderResponse %+#v", orderResponse)
@@ -196,7 +238,7 @@ func (bc *BinanceClient) CreateSellOrder(symbol, price, quantity string) (*binan
 		TimeInForce(binance.TimeInForceTypeGTC).
 		Do(context.Background())
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("CreateSellOrderError: ", err)
 		return nil, err
 	}
 	fmt.Printf("createsellorder Response %+#v", orderResponse)
@@ -234,7 +276,9 @@ func (bc *BinanceClient) CreateMarketBuyOrder(symbol string, quantity float64) (
 }
 
 func (bc *BinanceClient) ListOrders(symbol string) {
-	orders, err := bc.client.NewListOrdersService().Symbol(symbol).
+	orders, err := bc.client.NewListOrdersService().
+		Symbol(symbol).
+		StartTime(time.Now().Add(-60 * time.Hour * 24).Unix()).
 		Do(context.Background())
 	if err != nil {
 		fmt.Println(err)
@@ -407,5 +451,28 @@ func (bc *BinanceClient) ConnectSellOrderWithBuyOrder(sellorderID, buyorderID in
 		return fmt.Errorf("order for sellorderID %d is not a sell order, order is %s", buyorderID, sellorder.Order.Side)
 	}
 	bc.Store.SetSellForOrder(buyorderID, sellorderID, 0.0)
+	return nil
+}
+
+func (bc *BinanceClient) GetExchangeInfo() error {
+	info, err := bc.client.NewExchangeInfoService().Do(context.Background())
+	if err != nil {
+		fmt.Printf("exchangeinfo error : %s", err)
+		return nil
+	}
+	bc.ExchangeInfo = info
+	//fmt.Printf("exchangeinfo %+#v\n", info)
+
+	//ls := GetLotSizeStepForSymbolFromExchangeInfo(info, "DOGEEUR")
+	//fmt.Printf("LotSize for DOGE is %s", ls)
+	b, _ := json.MarshalIndent(info, " ", " ")
+	file := "exchangeinfo.json"
+	r, err := os.Create(file)
+	if err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintf(r, "%s", b)
+
+	_ = r.Close()
 	return nil
 }
