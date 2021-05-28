@@ -59,7 +59,7 @@ func InitReplaceSellOrder() *cli.Command {
 				return nil
 			}
 			fmt.Printf("create new sell order with mult %f \n", mult)
-			_, err = binaClient.PostSellForOrder(buyOrder.Order.OrderID, buyOrder.Order.Symbol, mult)
+			_, err = binaClient.PostSellForOrder(buyOrder.Order.OrderID, buyOrder.Order.Symbol, mult, 0.0)
 			if err != nil {
 				fmt.Printf("error creating new sell order %sn", err)
 				return nil

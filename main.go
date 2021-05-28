@@ -49,7 +49,7 @@ func main() {
 					mult := c.Float64("mult")
 					binaClient := NewBinanceClient(binaAPIKey, binaSecretKey)
 
-					sellOrder, err := binaClient.PostSellForOrder(order, symbol, mult)
+					sellOrder, err := binaClient.PostSellForOrder(order, symbol, mult, 0.0)
 					if err != nil {
 						fmt.Println(err)
 						return nil

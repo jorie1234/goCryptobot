@@ -213,6 +213,10 @@ func InitDepotInfo() *cli.Command {
 					if o.Order.Type == binance.OrderTypeMarket {
 						pr = "Market"
 					}
+					eq := o.Order.ExecutedQuantity
+					if eq == "0.00000000" {
+						eq = o.Order.OrigQuantity
+					}
 					t.AppendRow([]interface{}{
 						//i,
 						//o.Order.Symbol,
@@ -220,7 +224,7 @@ func InitDepotInfo() *cli.Command {
 						//	o.Order.ClientOrderID,
 						pr,
 						//o.Order.OrigQuantity,
-						o.Order.ExecutedQuantity,
+						eq,
 						o.Order.CummulativeQuoteQuantity,
 						//price.Price,
 						//fmt.Sprintf("%.8f", quantity*avgPrc),

@@ -31,6 +31,7 @@ func InitSellBot() *cli.Command {
 			symbol := c.String("symbol")
 			last := c.String("last")
 			mult := c.Float64("mult")
+			pricePara := c.Float64("price")
 			symb := strings.Split(symbol, ",")
 			lastDuration, err := time.ParseDuration(last)
 			var ordersToSell []BinanceOrder
@@ -38,6 +39,10 @@ func InitSellBot() *cli.Command {
 			if err != nil {
 				fmt.Printf("Error parsing Last Parameter %s %v\n", last, err)
 				return err
+			}
+			if (pricePara == 0.0 && mult == 0.0) || (pricePara > 0 && mult > 0) {
+				fmt.Printf("Please specify price OR mult\n")
+				return nil
 			}
 			for _, v := range symb {
 				binaClient.ListOrders(v)
@@ -90,6 +95,13 @@ func InitSellBot() *cli.Command {
 					cumQuote, _ := strconv.ParseFloat(o.Order.CummulativeQuoteQuantity, 8)
 					orderPrice, _ := strconv.ParseFloat(o.Order.Price, 8)
 					ordersToSell = append(ordersToSell, o)
+					sellQuoteQnt := cumQuote * mult
+					sellPrice := orderPrice * mult
+					if pricePara > 0.0 {
+						tmp, _ := strconv.ParseFloat(o.Order.ExecutedQuantity, 8)
+						sellQuoteQnt = tmp * pricePara
+						sellPrice = pricePara
+					}
 					t.AppendRow([]interface{}{
 						o.Order.OrderID,
 						o.Order.Price,
@@ -97,8 +109,8 @@ func InitSellBot() *cli.Command {
 						o.Order.CummulativeQuoteQuantity,
 						o.Order.Side,
 						o.Order.Status,
-						fmt.Sprintf("%.8f", cumQuote*mult),
-						fmt.Sprintf("%.8f", orderPrice*mult),
+						fmt.Sprintf("%.8f", sellQuoteQnt),
+						fmt.Sprintf("%.8f", sellPrice),
 						time.Unix(o.Order.Time/1000, 0).Format(time.Stamp),
 					}, table.RowConfig{
 						AutoMerge: false,
@@ -116,7 +128,7 @@ func InitSellBot() *cli.Command {
 				}
 				fmt.Printf("done\n")
 				for _, o := range ordersToSell {
-					_, err := binaClient.PostSellForOrder(o.Order.OrderID, o.Order.Symbol, mult)
+					_, err := binaClient.PostSellForOrder(o.Order.OrderID, o.Order.Symbol, mult, pricePara)
 					if err != nil {
 						fmt.Println(err)
 					}
@@ -160,7 +172,20 @@ func InitSellBot() *cli.Command {
 				Usage:       "multiplier, create sell order for CummulativeQuoteQuantity * mult",
 				EnvVars:     nil,
 				FilePath:    "",
-				Required:    true,
+				Required:    false,
+				Hidden:      false,
+				TakesFile:   false,
+				Value:       "",
+				Destination: nil,
+				HasBeenSet:  false,
+			},
+			&cli.StringFlag{
+				Name:        "price",
+				Aliases:     []string{"p"},
+				Usage:       "fixed price for all sell orders",
+				EnvVars:     nil,
+				FilePath:    "",
+				Required:    false,
 				Hidden:      false,
 				TakesFile:   false,
 				Value:       "",

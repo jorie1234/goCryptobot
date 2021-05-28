@@ -130,7 +130,7 @@ func (bos BinanceOrderStore) InsertNewBuyOrder(order *binance.Order) error {
 	})
 	return bos.Save()
 }
-func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult float64) (*binance.Order, error) {
+func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult, fixPrice float64) (*binance.Order, error) {
 
 	order := bc.Store.GetOrderByID(orderID)
 	if order == nil {
@@ -159,6 +159,9 @@ func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult flo
 	fmt.Printf("fetched order %+#v\n", ord)
 	Price, _ := strconv.ParseFloat(ord.Price, 8)
 	Price = Price * mult
+	if fixPrice > 0 {
+		Price = fixPrice
+	}
 
 	lotSize := GetLotSizeStepForSymbolFromExchangeInfo(bc.ExchangeInfo, symbol)
 	if len(lotSize) == 0 {
@@ -278,13 +281,14 @@ func (bc *BinanceClient) CreateMarketBuyOrder(symbol string, quantity float64) (
 func (bc *BinanceClient) ListOrders(symbol string) {
 	orders, err := bc.client.NewListOrdersService().
 		Symbol(symbol).
-		StartTime(time.Now().Add(-60 * time.Hour * 24).Unix()).
+		StartTime(int64(time.Now().Add(-30*time.Hour*24).UnixNano() / 1000000)).
+		Limit(2000).
 		Do(context.Background())
 	if err != nil {
 		fmt.Println(err)
 		return //orders, nil
 	}
-	log.Printf("found %d orders for symbol %s\n", len(orders), symbol)
+	log.Printf("***found %d orders for symbol %s\n", len(orders), symbol)
 	for _, v := range orders {
 		bc.InsertOrder(v)
 	}
@@ -370,7 +374,7 @@ func (bc *BinanceClient) GetOrderByID(id int64) *BinanceOrder {
 			return &r
 		}
 	}
-	return nil
+	return &BinanceOrder{}
 }
 func (bc *BinanceClient) InsertOrder(o *binance.Order) {
 	found := false
