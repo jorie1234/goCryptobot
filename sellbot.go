@@ -34,7 +34,6 @@ func InitSellBot() *cli.Command {
 			pricePara := c.Float64("price")
 			symb := strings.Split(symbol, ",")
 			lastDuration, err := time.ParseDuration(last)
-			var ordersToSell []BinanceOrder
 
 			if err != nil {
 				fmt.Printf("Error parsing Last Parameter %s %v\n", last, err)
@@ -44,7 +43,16 @@ func InitSellBot() *cli.Command {
 				fmt.Printf("Please specify price OR mult\n")
 				return nil
 			}
+			fmt.Printf("Refresh Exchangeinfo....")
+			err = binaClient.GetExchangeInfo()
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+				return nil
+			}
+			fmt.Printf("done\n")
+
 			for _, v := range symb {
+				var ordersToSell []BinanceOrder
 				binaClient.ListOrders(v)
 
 				if len(v) == 0 {
@@ -120,13 +128,6 @@ func InitSellBot() *cli.Command {
 				}
 				//t.AppendFooter(table.Row{"", "", "", "", "", "", "", "", "", fmt.Sprintf("%11.8f", cumProfit), "", ""})
 				t.Render()
-				fmt.Printf("Refresh Exchangeinfo....")
-				err = binaClient.GetExchangeInfo()
-				if err != nil {
-					fmt.Printf("Error: %v\n", err)
-					return nil
-				}
-				fmt.Printf("done\n")
 				for _, o := range ordersToSell {
 					_, err := binaClient.PostSellForOrder(o.Order.OrderID, o.Order.Symbol, mult, pricePara)
 					if err != nil {
