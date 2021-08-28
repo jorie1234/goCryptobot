@@ -89,11 +89,43 @@ func GetLotSizeStepForSymbolFromExchangeInfo(ei *binance.ExchangeInfo, symbol st
 	}
 	return ""
 }
+func GetPriceFilterStepForSymbolFromExchangeInfo(ei *binance.ExchangeInfo, symbol string) string {
+	var tickSize string
+	var priceFound bool
+	for _, v := range ei.Symbols {
+		if v.Symbol == symbol {
+			for _, f := range v.Filters {
+				for k, ff := range f {
+					if k == "tickSize" {
+						tickSize = ff.(string)
+						if priceFound {
+							return tickSize
+						}
+					}
+					if k == "filterType" {
+						if ff == "PRICE_FILTER" {
+							priceFound = true
+							if len(tickSize) > 0 {
+								return tickSize
+							}
+						}
+					}
+					//fmt.Printf("%s %s\n", k, ff)
+				}
+			}
+			return ""
+		}
+	}
+	return ""
+}
 
 func TrimQuantityToLotSize(quantity, lotSize string) string {
 	qa := strings.Split(quantity, ".")
 	la := strings.Split(lotSize, ".")
 	if len(qa) == 1 || len(qa[1]) == 0 {
+		return qa[0]
+	}
+	if la[0] == "1" {
 		return qa[0]
 	}
 	result := qa[0] + "."

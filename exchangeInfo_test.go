@@ -43,6 +43,13 @@ func TestTrimQuantityToLotSize(t *testing.T) {
 				lotSize:  "0.0001",
 			},
 			want: "123",
+		}, {
+			name: "lot size 1.00",
+			args: args{
+				quantity: "123.123",
+				lotSize:  "1.00",
+			},
+			want: "123",
 		},
 	}
 	for _, tt := range tests {

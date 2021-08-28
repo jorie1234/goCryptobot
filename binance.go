@@ -173,7 +173,12 @@ func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult, fi
 	quant, _ := strconv.ParseFloat(quantityTrimmed, 8)
 	cumQuote, _ := strconv.ParseFloat(ord.CummulativeQuoteQuantity, 8)
 
-	fmt.Printf("Sell orderID for Price %s quant %s sell will be at %.2f€ profit will be %.2f€\n", PriceString, quantityTrimmed, Price*quant, Price*quant-cumQuote)
+	priceTickStep := GetPriceFilterStepForSymbolFromExchangeInfo(bc.ExchangeInfo, symbol)
+	if len(priceTickStep) == 0 {
+		return nil, fmt.Errorf("cannot get priceTickStep for symbol %s", symbol)
+	}
+	priceTrimmed := TrimQuantityToLotSize(PriceString, priceTickStep)
+	fmt.Printf("Sell orderID for Price %s quant %s sell will be at %.2f€ profit will be %.2f€\n", priceTrimmed, quantityTrimmed, Price*quant, Price*quant-cumQuote)
 	if !Confirm("Perform sell ?") {
 		return nil, nil
 	}
@@ -182,7 +187,7 @@ func (bc *BinanceClient) PostSellForOrder(orderID int64, symbol string, mult, fi
 		Symbol(symbol).
 		Type(binance.OrderTypeLimit).
 		Quantity(quantityTrimmed).
-		Price(PriceString).
+		Price(priceTrimmed).
 		Side(binance.SideTypeSell).
 		TimeInForce(binance.TimeInForceTypeGTC).
 		Do(context.Background())
@@ -281,8 +286,8 @@ func (bc *BinanceClient) CreateMarketBuyOrder(symbol string, quantity float64) (
 func (bc *BinanceClient) ListOrders(symbol string) {
 	orders, err := bc.client.NewListOrdersService().
 		Symbol(symbol).
-		StartTime(int64(time.Now().Add(-30*time.Hour*24).UnixNano() / 1000000)).
-		Limit(2000).
+		StartTime(int64(time.Now().Add(-120*time.Hour*24).UnixNano() / 1000000)).
+		Limit(8000).
 		Do(context.Background())
 	if err != nil {
 		fmt.Println(err)
